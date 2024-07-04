@@ -3,5 +3,5 @@ package main
 import "paging/system"
 
 func main() {
-	system.Init_system()
+	system.InitSystem()
 }
