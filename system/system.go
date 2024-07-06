@@ -86,7 +86,9 @@ func InitSystem() {
 
 			fmt.Println("Process created!")
 		case 3:
-			fmt.Println("Option 3")
+			fmt.Printf("Enter a PID: ")
+			fmt.Scan(&pid)
+			process.ShowTablePage(pid)
 		case 0:
 			return
 		}

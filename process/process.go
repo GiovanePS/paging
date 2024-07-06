@@ -3,6 +3,7 @@ package process
 import (
 	"fmt"
 	"math/rand"
+	"paging/memory"
 )
 
 type Process struct {
@@ -16,12 +17,14 @@ type Process struct {
 var HeadProcess *Process
 
 func CreateProcess(pid int, size int) error {
-	if err := findProcess(pid); err != nil {
+	if err := processAlreadyExists(pid); err != nil {
 		return err
 	}
 
 	newProcess := &Process{pid, size, nil, nil, nil}
 	initLocalMemory(newProcess)
+	initTablePage(newProcess)
+	includeProcess(newProcess)
 
 	return nil
 }
@@ -35,27 +38,78 @@ func initLocalMemory(process *Process) {
 	}
 }
 
-func findProcess(pid int) (err error) {
+func initTablePage(process *Process) {
+	numPages := process.Size / memory.FRAME_PAGE_SIZE
+
+	process.PageTableEntry = make([]int, numPages)
+	singlePage := make([]byte, memory.FRAME_PAGE_SIZE)
+	for i := 0; i < numPages; i++ {
+		offset := i * memory.FRAME_PAGE_SIZE
+		singlePage = process.LogicalMemory[offset : offset+memory.FRAME_PAGE_SIZE]
+		frameAllocated := memory.AllocateFrame(singlePage)
+		process.PageTableEntry[i] = frameAllocated
+	}
+}
+
+func ShowTablePage(pid int) (err error) {
+	process, err := findProcess(pid)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	fmt.Printf("Process size: %d\n", process.Size)
+	fmt.Println("Page <=> Frame")
+	numPages := process.Size / memory.FRAME_PAGE_SIZE
+	for i := 0; i < numPages; i++ {
+		frame := process.PageTableEntry[i]
+		fmt.Printf("%d    <=> %d\n", i, frame)
+	}
+
+	return err
+}
+
+func findProcess(pid int) (process *Process, err error) {
+	cursor := HeadProcess
+
+	for cursor != nil {
+		if cursor.Pid == pid {
+			return cursor, nil
+		}
+		cursor = cursor.Next
+	}
+
+	err = fmt.Errorf("Process with PID %d not found.\n", pid)
+	return nil, err
+}
+
+func includeProcess(process *Process) {
+	if HeadProcess == nil {
+		HeadProcess = process
+	}
+
+	cursor := HeadProcess
+	for cursor.Next != nil {
+		cursor = cursor.Next
+	}
+
+	cursor.Next = process
+}
+
+func processAlreadyExists(pid int) (err error) {
 	if HeadProcess == nil {
 		return nil
 	}
 
 	processCreated := false
-
 	cursor := HeadProcess
-	for cursor.Next != nil {
+	for cursor != nil {
 		if cursor.Pid == pid {
 			processCreated = true
 			break
 		}
 
 		cursor = cursor.Next
-	}
-
-	if cursor.Next == nil && cursor.Pid != pid {
-		return nil
-	} else {
-		processCreated = true
 	}
 
 	if processCreated {

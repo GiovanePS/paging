@@ -1,6 +1,9 @@
 package memory
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 type Node struct {
 	IdSerial int
@@ -28,6 +31,10 @@ func InitPhysicalMemory() {
 		cursor.Next = nextNode
 		cursor = cursor.Next
 	}
+}
+
+func AllocateFrame(page []byte) int {
+	return rand.Intn(100)
 }
 
 func ShowMemory() {
