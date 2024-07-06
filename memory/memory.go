@@ -34,7 +34,60 @@ func InitPhysicalMemory() {
 }
 
 func AllocateFrame(page []byte) int {
-	return rand.Intn(100)
+	previous := getSomeFrameToAllocate()
+	var cursor *Node
+
+	if previous.Next == nil {
+		cursor = previous
+	} else {
+		cursor = previous.Next
+	}
+
+	frameStart := cursor.IdSerial
+
+	for offset := 0; offset < FRAME_PAGE_SIZE; offset++ {
+		PhysicalMemory[frameStart+offset] = page[offset]
+	}
+
+	FreeFrames--
+	frameAllocated := cursor.IdSerial
+	if cursor.Next != nil {
+		previous.Next = cursor.Next
+	} else {
+		previous.Next = nil
+	}
+
+	return frameAllocated
+}
+
+func getSomeFrameToAllocate() *Node {
+	if float64(FreeFrames)/float64(TotalFrames) >= 0.15 {
+		// While runs until draw a free frame
+		for {
+			frame := rand.Intn(FreeFrames)
+			cursor := HeadFreeFrames
+			if cursor.IdSerial == frame {
+				HeadFreeFrames = HeadFreeFrames.Next
+				cursor.Next = nil
+				return cursor
+			}
+
+			for cursor.Next != nil {
+				if cursor.Next.IdSerial >= frame {
+					// Returning the previous frame, to delete the choosed frame
+					return cursor
+				}
+
+				cursor = cursor.Next
+			}
+		}
+
+	} else {
+		cursor := HeadFreeFrames
+		HeadFreeFrames = HeadFreeFrames.Next
+		cursor.Next = nil
+		return cursor
+	}
 }
 
 func ShowMemory() {
