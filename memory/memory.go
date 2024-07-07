@@ -26,7 +26,7 @@ func InitPhysicalMemory() {
 	PhysicalMemory = make([]byte, PHYSICAL_MEMORY_SIZE)
 
 	cursor := HeadFreeFrames
-	for i := 0; i < TotalFrames; i++ {
+	for i := 1; i < TotalFrames; i++ {
 		nextNode := &Node{i, nil}
 		cursor.Next = nextNode
 		cursor = cursor.Next
@@ -63,8 +63,9 @@ func AllocateFrame(page []byte) int {
 func getSomeFrameToAllocate() *Node {
 	if float64(FreeFrames)/float64(TotalFrames) >= 0.15 {
 		// While runs until draw a free frame
+		minFrameId := HeadFreeFrames.IdSerial
 		for {
-			frame := rand.Intn(FreeFrames)
+			frame := rand.Intn(FreeFrames) + minFrameId
 			cursor := HeadFreeFrames
 			if cursor.IdSerial == frame {
 				HeadFreeFrames = HeadFreeFrames.Next
