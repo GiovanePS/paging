@@ -42,11 +42,12 @@ func initTablePage(process *Process) {
 	numPages := process.Size / memory.FRAME_PAGE_SIZE
 
 	process.PageTableEntry = make([]int, numPages)
-	singlePage := make([]byte, memory.FRAME_PAGE_SIZE)
+	pageAuxiliary := make([]byte, memory.FRAME_PAGE_SIZE)
 	for i := 0; i < numPages; i++ {
-		offset := i * memory.FRAME_PAGE_SIZE
-		singlePage = process.LogicalMemory[offset : offset+memory.FRAME_PAGE_SIZE]
-		frameAllocated := memory.AllocateFrame(singlePage)
+		for offset := 0; offset < memory.FRAME_PAGE_SIZE; offset++ {
+			pageAuxiliary[offset] = process.LogicalMemory[i*memory.FRAME_PAGE_SIZE+offset]
+		}
+		frameAllocated := memory.AllocateFrame(pageAuxiliary)
 		process.PageTableEntry[i] = frameAllocated
 	}
 }

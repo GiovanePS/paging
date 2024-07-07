@@ -43,7 +43,7 @@ func AllocateFrame(page []byte) int {
 		cursor = previous.Next
 	}
 
-	frameStart := cursor.IdSerial
+	frameStart := cursor.IdSerial * FRAME_PAGE_SIZE
 
 	for offset := 0; offset < FRAME_PAGE_SIZE; offset++ {
 		PhysicalMemory[frameStart+offset] = page[offset]
@@ -95,7 +95,7 @@ func ShowMemory() {
 	fmt.Println("Positon <=> Value")
 	for i := 0; i < PHYSICAL_MEMORY_SIZE/FRAME_PAGE_SIZE; i++ {
 		start := FRAME_PAGE_SIZE * i
-		end := FRAME_PAGE_SIZE*i + FRAME_PAGE_SIZE - 1
+		end := FRAME_PAGE_SIZE*i + FRAME_PAGE_SIZE
 		fmt.Printf("%d <=> %s\n", i, PhysicalMemory[start:end])
 	}
 	fmt.Println()
