@@ -22,14 +22,14 @@ func CreateProcess(pid int, size int) error {
 	}
 
 	newProcess := &Process{pid, size, nil, nil, nil}
-	initLocalMemory(newProcess)
+	initLogicalMemory(newProcess)
 	initTablePage(newProcess)
 	includeProcess(newProcess)
 
 	return nil
 }
 
-func initLocalMemory(process *Process) {
+func initLogicalMemory(process *Process) {
 	process.LogicalMemory = make([]byte, process.Size)
 
 	for i := 0; i < process.Size; i++ {
@@ -42,11 +42,12 @@ func initTablePage(process *Process) {
 	numPages := process.Size / memory.FRAME_PAGE_SIZE
 
 	process.PageTableEntry = make([]int, numPages)
-	singlePage := make([]byte, memory.FRAME_PAGE_SIZE)
+	pageAuxiliary := make([]byte, memory.FRAME_PAGE_SIZE)
 	for i := 0; i < numPages; i++ {
-		offset := i * memory.FRAME_PAGE_SIZE
-		singlePage = process.LogicalMemory[offset : offset+memory.FRAME_PAGE_SIZE]
-		frameAllocated := memory.AllocateFrame(singlePage)
+		for offset := 0; offset < memory.FRAME_PAGE_SIZE; offset++ {
+			pageAuxiliary[offset] = process.LogicalMemory[i*memory.FRAME_PAGE_SIZE+offset]
+		}
+		frameAllocated := memory.AllocateFrame(pageAuxiliary)
 		process.PageTableEntry[i] = frameAllocated
 	}
 }
@@ -86,6 +87,7 @@ func findProcess(pid int) (process *Process, err error) {
 func includeProcess(process *Process) {
 	if HeadProcess == nil {
 		HeadProcess = process
+		return
 	}
 
 	cursor := HeadProcess
@@ -101,20 +103,13 @@ func processAlreadyExists(pid int) (err error) {
 		return nil
 	}
 
-	processCreated := false
 	cursor := HeadProcess
 	for cursor != nil {
 		if cursor.Pid == pid {
-			processCreated = true
-			break
+			return fmt.Errorf("Process with PID %d already created.\n", pid)
 		}
 
 		cursor = cursor.Next
-	}
-
-	if processCreated {
-		err = fmt.Errorf("Process with PID %d already created.\n", pid)
-		return err
 	}
 
 	return nil

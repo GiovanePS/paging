@@ -82,15 +82,17 @@ func InitSystem() {
 			if err != nil {
 				fmt.Println(err.Error())
 				break
+			} else {
+				fmt.Println("Process created!")
 			}
-
-			fmt.Println("Process created!")
 		case 3:
 			fmt.Printf("Enter a PID: ")
 			fmt.Scan(&pid)
 			process.ShowTablePage(pid)
 		case 0:
 			return
+		default:
+			fmt.Println("Invalid choice!")
 		}
 	}
 }
