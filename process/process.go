@@ -22,14 +22,14 @@ func CreateProcess(pid int, size int) error {
 	}
 
 	newProcess := &Process{pid, size, nil, nil, nil}
-	initLocalMemory(newProcess)
+	initLogicalMemory(newProcess)
 	initTablePage(newProcess)
 	includeProcess(newProcess)
 
 	return nil
 }
 
-func initLocalMemory(process *Process) {
+func initLogicalMemory(process *Process) {
 	process.LogicalMemory = make([]byte, process.Size)
 
 	for i := 0; i < process.Size; i++ {
@@ -86,6 +86,7 @@ func findProcess(pid int) (process *Process, err error) {
 func includeProcess(process *Process) {
 	if HeadProcess == nil {
 		HeadProcess = process
+		return
 	}
 
 	cursor := HeadProcess
@@ -101,20 +102,13 @@ func processAlreadyExists(pid int) (err error) {
 		return nil
 	}
 
-	processCreated := false
 	cursor := HeadProcess
 	for cursor != nil {
 		if cursor.Pid == pid {
-			processCreated = true
-			break
+			return fmt.Errorf("Process with PID %d already created.\n", pid)
 		}
 
 		cursor = cursor.Next
-	}
-
-	if processCreated {
-		err = fmt.Errorf("Process with PID %d already created.\n", pid)
-		return err
 	}
 
 	return nil
